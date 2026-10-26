@@ -3,6 +3,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#2b59ff">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Расходы">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>Расходы</title>
 <style>
 :root{--bg:#eef1f6;--card:#fff;--tx:#14213d;--mu:#6b7690;--ac:#2b59ff;--on:#fff;--bd:#dbe0ec}
@@ -184,6 +190,7 @@ addEventListener('keydown',e=>{if(e.key==='Escape')closeS()});
 
 $('#su').onclick=()=>{url=$('#u').value.trim();sv('exp_url',url);status(url?'Ссылка сохранена':'Синхронизация выключена');pull();items.filter(i=>!i.synced).forEach(push)};
 $('#u').value=url;$('#d').value=iso(new Date());
+if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 fillC();recent();pull();items.filter(i=>!i.synced).forEach(push);
 </script>
 </body></html>
