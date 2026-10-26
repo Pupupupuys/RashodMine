@@ -143,7 +143,7 @@ function pull(){
   if(!url)return Promise.resolve();
   return fetch(url).then(r=>r.json()).then(rows=>{
     const ids=new Set(rows.map(r=>r.id)),keep=items.filter(i=>!ids.has(i.id)&&!i.synced);
-    items=rows.map(r=>({...r,synced:true})).concat(keep);sv('exp_items',items);
+    items=rows.map(r=>({...r,date:nd(r.date),amount:+r.amount||0,synced:true})).concat(keep);sv('exp_items',items);
     keep.forEach(push);recent();stats();
   }).catch(()=>status('Не удалось загрузить из таблицы'));
 }
@@ -170,6 +170,15 @@ function inPer(i){
   const n=new Date();
   if(per==='month')return i.date.slice(0,7)===iso(n).slice(0,7);
   const w=new Date(n);w.setDate(n.getDate()-6);return i.date>=iso(w);
+}
+function nd(v){
+  v=String(v==null?'':v).trim();
+  if(/^\d{4}-\d{2}-\d{2}/.test(v))return v.slice(0,10);
+  const m=v.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})/);
+  if(m)return m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');
+  const t=v.match(/^\w{3} (\w{3}) (\d{1,2}) (\d{4})/),mo='JanFebMarAprMayJunJulAugSepOctNovDec'.indexOf(t&&t[1]);
+  if(t&&mo>=0)return t[3]+'-'+String(mo/3+1).padStart(2,'0')+'-'+t[2].padStart(2,'0');
+  const d=new Date(v);return isNaN(d)?v:iso(d);
 }
 function squarify(list,W,H){
   const sc=W*H/list.reduce((s,o)=>s+o.sum,0),res=[];let x=0,y=0,w=W,h=H,i=0;
@@ -259,6 +268,7 @@ $('#theme').onclick=()=>{theme={auto:'light',light:'dark',dark:'auto'}[theme];sv
 applyTheme();
 $('#u').value=url;$('#d').value=iso(new Date());
 if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+items.forEach(i=>{i.date=nd(i.date);i.amount=+i.amount||0});
 fillC();renderCats();recent();pull();items.filter(i=>!i.synced).forEach(push);
 </script>
 </body></html>
