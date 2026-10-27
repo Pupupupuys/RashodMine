@@ -75,6 +75,9 @@ details input{margin:8px 0}
 .ic:disabled{opacity:.3;cursor:default}
 .tile.grp b{font-size:15px}
 .tile.kid{background:rgba(255,255,255,.2);border-width:1.5px;border-radius:5px;padding:3px 5px;font-size:11.5px}
+.tile{white-space:nowrap;text-overflow:ellipsis}
+.tile b{display:inline;margin-right:6px}
+.tile.grp{padding:5px 8px}
 @media(prefers-reduced-motion:reduce){.sec{transition:none}}
 </style></head>
 <body>
@@ -213,24 +216,23 @@ function squarify(list,W,H){
   }
   return res;
 }
-const TH=90;
 function treeHTML(arr,l,keyOf,tot){
   arr=arr.filter(o=>o.sum>0);
   if(!arr.length||!(tot>0))return '<div class="empty">За этот период расходов нет</div>';
-  const out=[],deep=path.length<2;
-  const tile=(x,y,w,h,cls,style,attr,inner,t)=>`<div class="tile ${cls}" ${attr} title="${esc(t)}" style="left:${x}%;top:${y/TH*100}%;width:${w}%;height:${h/TH*100}%;${style}">${inner}</div>`;
+  const W=Math.max(200,$('#tree').clientWidth||340),H=Math.round(W*.9),HD=28,out=[],deep=path.length<2;
+  const tile=(x,y,w,h,cls,style,attr,inner,t)=>`<div class="tile ${cls}" ${attr} title="${esc(t)}" style="left:${x/W*100}%;top:${y/H*100}%;width:${w/W*100}%;height:${h/H*100}%;${style}">${inner}</div>`;
   const ck=path.length===0?(i=>i.sub):(i=>i.name.trim().toLowerCase()),cl=path.length===0?(i=>i.sub):(i=>i.name.trim());
-  squarify(arr,100,TH).forEach((g,gi)=>{
-    const o=g.o,col=COL[gi%COL.length],hdr=deep&&g.w>=14&&g.h>=12;
-    const lab=hdr||(g.w>16&&g.h>10)?`<b>${esc(o.label)}</b>${Math.round(o.sum/tot*100)}%`:'';
+  squarify(arr,W,H).forEach((g,gi)=>{
+    const o=g.o,col=COL[gi%COL.length],hdr=deep&&g.w>=70&&g.h>=HD+24;
+    const lab=hdr||(g.w>=60&&g.h>=26)?`<b>${esc(o.label)}</b><span>${Math.round(o.sum/tot*100)}%</span>`:'';
     out.push(tile(g.x,g.y,g.w,g.h,'grp'+(deep?' go2':''),'background:'+col,'data-g="'+esc(o.label)+'"',lab,o.label+' — '+fmt(o.sum)));
     if(!hdr)return;
     const m=new Map();
     l.filter(i=>keyOf(i)===o.key).forEach(i=>{const k=ck(i),c=m.get(k)||{label:cl(i),sum:0};c.sum+=i.amount;m.set(k,c)});
     const kids=[...m.values()].filter(c=>c.sum>0).sort((a,b)=>b.sum-a.sum);
     if(!kids.length)return;
-    squarify(kids,g.w-1.2,g.h-6.6).forEach(k=>{
-      out.push(tile(g.x+.6+k.x,g.y+6+k.y,k.w,k.h,'kid'+(path.length===0?' go2':''),'border-color:'+col,'data-g="'+esc(o.label)+'" data-k="'+esc(k.o.label)+'"',k.w>12&&k.h>9?esc(k.o.label):'',k.o.label+' — '+fmt(k.o.sum)));
+    squarify(kids,g.w-6,g.h-HD-3).forEach(k=>{
+      out.push(tile(g.x+3+k.x,g.y+HD+k.y,k.w,k.h,'kid'+(path.length===0?' go2':''),'border-color:'+col,'data-g="'+esc(o.label)+'" data-k="'+esc(k.o.label)+'"',k.w>=56&&k.h>=22?esc(k.o.label):'',k.o.label+' — '+fmt(k.o.sum)));
     });
   });
   return out.join('');
@@ -294,6 +296,7 @@ let y1=null;
 sec.addEventListener('touchstart',e=>{y1=e.touches[0].clientY},{passive:true});
 sec.addEventListener('touchend',e=>{if(y1!=null&&y1-e.changedTouches[0].clientY>110&&sec.scrollTop<=0)closeS();y1=null},{passive:true});
 addEventListener('keydown',e=>{if(e.key==='Escape')closeS()});
+addEventListener('resize',()=>{if(sec.classList.contains('open')&&view==='tree')stats()});
 
 function renderCats(){
   $('#cl').innerHTML=Object.keys(cats).map(c=>`<div class="ct"><div class="h"><span>${esc(c)}</span><button class="x" data-c="${esc(c)}">Удалить</button></div>${cats[c].map(x=>`<span class="sc">${esc(x)}<button class="x" data-c="${esc(c)}" data-s="${esc(x)}" aria-label="Удалить подкатегорию">✕</button></span>`).join('')}</div>`).join('')||'<div class="empty">Категорий нет. Добавьте через «＋ Своя…» в форме.</div>';
